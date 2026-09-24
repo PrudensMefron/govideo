@@ -7,6 +7,7 @@ import (
 	appsvc "github.com/PrudensMefron/govideo/internal/app"
 	"github.com/PrudensMefron/govideo/internal/core"
 	"github.com/PrudensMefron/govideo/internal/deps"
+	appupdate "github.com/PrudensMefron/govideo/internal/desktop/update"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"os"
 	"path/filepath"
@@ -42,13 +43,14 @@ type DesktopService struct {
 	app          *application.App
 	jobs         *appsvc.Service
 	deps         *deps.Manager
+	updates      *appupdate.Manager
 	settingsPath string
 	mu           sync.Mutex
 	settings     Settings
 }
 
-func NewDesktopService(a *application.App, j *appsvc.Service, d *deps.Manager, root string) *DesktopService {
-	s := &DesktopService{app: a, jobs: j, deps: d, settingsPath: filepath.Join(root, "state", "settings.json")}
+func NewDesktopService(a *application.App, j *appsvc.Service, d *deps.Manager, updates *appupdate.Manager, root string) *DesktopService {
+	s := &DesktopService{app: a, jobs: j, deps: d, updates: updates, settingsPath: filepath.Join(root, "state", "settings.json")}
 	s.loadSettings()
 	return s
 }
@@ -72,6 +74,10 @@ func (s *DesktopService) RetryDependency(name string) (deps.Status, error) {
 		return deps.Status{}, fmt.Errorf("unknown dependency %q", name)
 	}
 	return s.deps.EnsureYTDLP(context.Background())
+}
+func (s *DesktopService) GetUpdateStatus() appupdate.Status { return s.updates.Status() }
+func (s *DesktopService) CheckForUpdates() (appupdate.Status, error) {
+	return s.updates.CheckAndInstall(context.Background())
 }
 func (s *DesktopService) SelectInputVideos() ([]string, error) {
 	return s.app.Dialog.OpenFile().SetTitle("Selecionar vídeos").AddFilter("Vídeos", "*.mp4;*.mkv;*.webm;*.mov;*.avi;*.m4v").PromptForMultipleSelection()

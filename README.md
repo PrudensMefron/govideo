@@ -14,6 +14,7 @@ It is intended primarily to guide AI coding agents such as Codex, while remainin
 - `docs/04-implementation-roadmap.md` — ordered implementation plan.
 - `docs/05-platform-dependencies.md` — Linux/Windows and external dependency strategy.
 - `docs/06-frontend-wails.md` — Wails 3 + Vue 3 frontend guidance.
+- `docs/07-auto-updater.md` — GitHub Releases updater and draft-release pipeline.
 
 ## Recommended agent reading order
 

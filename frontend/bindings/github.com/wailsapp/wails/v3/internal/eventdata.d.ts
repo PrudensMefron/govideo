@@ -11,6 +11,9 @@ import type * as core$0 from "../../../../PrudensMefron/govideo/internal/core/mo
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import type * as deps$0 from "../../../../PrudensMefron/govideo/internal/deps/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import type * as update$0 from "../../../../PrudensMefron/govideo/internal/desktop/update/models.js";
 
 declare module "@wailsio/runtime" {
     namespace Events {
@@ -18,6 +21,7 @@ declare module "@wailsio/runtime" {
             "dependency:updated": deps$0.Status;
             "files:dropped": string[] | null;
             "job:updated": core$0.Job;
+            "update:updated": update$0.Status;
         }
     }
 }

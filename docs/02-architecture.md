@@ -291,6 +291,28 @@ Payloads should use Wails-friendly typed structs.
 
 The exact Wails v3 event API should be verified against the pinned version before implementation.
 
+## Application updater boundary
+
+Updating GoVideo itself is a desktop-adapter responsibility, separate from the
+managed `yt-dlp`/FFmpeg dependencies and from media jobs:
+
+```text
+Vue settings/update notice
+          ↓ typed intent/status
+Wails DesktopService
+          ↓
+internal/desktop/update
+          ↓
+Wails updater + mandatory SHA256SUMS
+          ↓
+PrudensMefron/govideo GitHub Releases
+```
+
+The updater must not enter `internal/core` or the media job manager. The
+frontend must not choose download URLs or execute release assets. See
+`07-auto-updater.md` for the release contract, verification model and Linux/Windows
+installation constraints.
+
 ## Browser fallback
 
 The Python implementation already demonstrated a fallback strategy:
