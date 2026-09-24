@@ -263,7 +263,9 @@ Also:
 - packaging;
 - release signing strategy;
 - error reporting/log locations;
-- update strategy for GoVideo itself.
+- harden the implemented GitHub Releases updater with independent artifact
+  signing as described in `07-auto-updater.md`;
+- validate real self-update and rollback flows on Linux AMD64 and Windows x64.
 
 ## Working rule for Codex
 

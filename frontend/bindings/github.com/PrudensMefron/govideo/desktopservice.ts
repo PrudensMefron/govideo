@@ -11,6 +11,9 @@ import * as core$0 from "./internal/core/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as deps$0 from "./internal/deps/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as update$0 from "./internal/desktop/update/models.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -24,8 +27,16 @@ export function CancelJob(id: string): $CancellablePromise<core$0.Job> {
     return $Call.ByID(673696146, id);
 }
 
+export function CheckForUpdates(): $CancellablePromise<update$0.Status> {
+    return $Call.ByID(897995752);
+}
+
 export function GetSettings(): $CancellablePromise<$models.Settings> {
     return $Call.ByID(682518218);
+}
+
+export function GetUpdateStatus(): $CancellablePromise<update$0.Status> {
+    return $Call.ByID(1848269000);
 }
 
 export function ListDependencies(): $CancellablePromise<deps$0.Status[] | null> {

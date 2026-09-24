@@ -11,9 +11,13 @@ Last documentation update: 2026-09-24.
 - managed yt-dlp `2026.08.19` for Linux/Windows with official SHA-256 verification and atomic install;
 - typed Wails bridge, job/dependency events, native dialogs, file drop and artifact reveal;
 - all direct yt-dlp, FFmpeg, FFprobe and dependency-validation processes use a shared launcher; on Windows it sets both `HideWindow` and `CREATE_NO_WINDOW`, preventing terminal flashes;
-- Vue 3 pt-BR workflow for download, batch conversion, activities and settings, with generated bindings, Tailwind/DaisyUI, light/dark themes and a pnpm lockfile/build workflow.
+- Vue 3 pt-BR workflow for download, batch conversion, activities and settings, with generated bindings, Tailwind/DaisyUI, light/dark themes and pnpm/npm lockfiles;
+- Wails updater connected directly to the public `PrudensMefron/govideo` GitHub Releases feed, with mandatory SHA-256 verification, delayed background checks, manual settings UI and hidden Windows helper process;
+- GitHub Actions CI/CD using npm and Wails `beta.20`, building Linux AMD64 and Windows AMD64 and creating a draft release for SemVer tags.
 
-Remaining hardening: managed FFmpeg archives/checksums (FFmpeg is currently detected from `PATH`), process-group/Windows Job Object termination, event coalescing, platform-native Downloads discovery, broader frontend tests, and Windows package verification. Browser fallback and update discovery remain post-MVP.
+Remaining hardening: managed FFmpeg archives/checksums (FFmpeg is currently detected from `PATH`), process-group/Windows Job Object termination, event coalescing, platform-native Downloads discovery, broader frontend tests, and Windows package verification. Browser fallback remains post-MVP.
+
+The updater and release contract are documented in `07-auto-updater.md`. Real `N → N+1` update tests and independent release signing remain required before the first stable publication.
 
 This document deliberately separates verified repository state, migration work already designed/implemented during development, and planned work.
 
@@ -230,24 +234,12 @@ Platform-specific external binary management must not leak into domain packages.
 
 ## 6. Not yet considered complete
 
-Unless the working tree proves otherwise, do not consider these completed:
-
-- Wails 3 shell;
-- Vue 3 GUI;
-- Wails service bridge;
-- job manager;
-- bounded concurrent worker execution;
-- structured live download progress;
-- cancellation end-to-end;
-- FFmpeg dependency manager;
-- audio-only online workflow;
-- "both" workflow;
-- local video-to-audio conversion;
-- Windows dependency management;
+- managed FFmpeg installation, checksum validation and independent updates;
+- process-tree cancellation through Linux process groups and Windows Job Objects;
 - browser fallback port to Go;
-- release checksum validation;
-- yt-dlp update flow;
-- persistent user settings;
-- download history.
+- independent updater artifact signing and real `N → N+1` update tests;
+- per-user distribution policy compatible with self-replacement on Windows and Linux;
+- full native Windows package verification;
+- broader frontend interaction and accessibility tests.
 
 This list should shrink as work lands.
