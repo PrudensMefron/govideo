@@ -147,10 +147,11 @@ O workflow está em `.github/workflows/release.yml`.
 
 ### Eventos
 
-- Push em qualquer branch: testes e compilação dos dois sistemas.
-- Pull request: testes e compilação dos dois sistemas.
-- Execução manual: testes e compilação dos dois sistemas.
-- Tag `v*.*.*`: além de testar e compilar, cria ou atualiza um draft release.
+- Push na branch `master`: testes e compilação dos dois sistemas.
+- Push de tag SemVer (`vMAJOR.MINOR.PATCH`): testes, compilação e criação do
+  release como draft.
+- Pushes em outras branches e eventos de pull request não executam este
+  workflow.
 
 ### Ferramentas fixadas
 
@@ -187,7 +188,7 @@ com `contents: read`.
 
 ## Criando um release
 
-1. confirme que a branch destinada ao release está integrada;
+1. confirme que o commit destinado ao release está integrado à `master`;
 2. crie e envie uma tag:
 
 ```sh
