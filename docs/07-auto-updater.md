@@ -153,6 +153,10 @@ O workflow está em `.github/workflows/release.yml`.
 - Pushes em outras branches e eventos de pull request não executam este
   workflow.
 
+Depois de um merge em `master`, é esperado haver uma execução para o push da
+`master`. Ao criar a tag em seguida, haverá uma segunda execução para o
+release; essa segunda execução é a que cria o draft com os artefatos.
+
 ### Ferramentas fixadas
 
 ```text
@@ -189,7 +193,7 @@ com `contents: read`.
 ## Criando um release
 
 1. confirme que o commit destinado ao release está integrado à `master`;
-2. crie e envie uma tag:
+2. crie e envie uma tag a partir da `master`:
 
 ```sh
 git tag v0.2.0
