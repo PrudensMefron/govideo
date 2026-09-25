@@ -147,11 +147,10 @@ O workflow está em `.github/workflows/release.yml`.
 
 ### Eventos
 
-- Pull request fechado com merge na branch `master`: testes, compilação dos
-  dois sistemas, criação automática da próxima tag patch e criação do release
-  como draft.
-- Pull requests fechados sem merge, pushes diretos e tags criadas manualmente
-  não executam este workflow.
+- Push na `master` após o merge: testes, compilação dos dois sistemas, criação
+  automática da próxima tag patch e criação do release como draft.
+- Branches de feature, eventos de pull request e tags criadas manualmente não
+  executam este workflow.
 
 O workflow consulta a maior tag estável existente (`vMAJOR.MINOR.PATCH`),
 incrementa o campo `PATCH` e cria a nova tag no commit mergeado. Por exemplo,
@@ -173,7 +172,7 @@ contrato de CI/CD.
 
 ### Etapas
 
-1. confirma que o evento é um merge na `master`;
+1. recebe o commit resultante do merge na `master`;
 2. encontra a maior tag estável e calcula a próxima versão patch;
 3. instala dependências com `npm ci`;
 4. executa o build TypeScript/Vite com npm;
