@@ -13,7 +13,7 @@ Last documentation update: 2026-09-24.
 - all direct yt-dlp, FFmpeg, FFprobe and dependency-validation processes use a shared launcher; on Windows it sets both `HideWindow` and `CREATE_NO_WINDOW`, preventing terminal flashes;
 - Vue 3 pt-BR workflow for download, batch conversion, activities and settings, with generated bindings, Tailwind/DaisyUI, light/dark themes and pnpm/npm lockfiles;
 - Wails updater connected directly to the public `PrudensMefron/govideo` GitHub Releases feed, with mandatory SHA-256 verification, delayed background checks, manual settings UI and hidden Windows helper process;
-- GitHub Actions CI/CD using npm and Wails `beta.20`, running only after merged pull requests to `master`, deriving the next patch version, creating the tag and draft release, and building Linux AMD64 and Windows AMD64.
+- GitHub Actions CI/CD using npm and Wails `beta.20`, running only for pushes to `master` after a merge, deriving the next patch version, creating the tag and draft release, and building Linux AMD64 and Windows AMD64.
 
 Remaining hardening: managed FFmpeg archives/checksums (FFmpeg is currently detected from `PATH`), process-group/Windows Job Object termination, event coalescing, platform-native Downloads discovery, broader frontend tests, and Windows package verification. Browser fallback remains post-MVP.
 
