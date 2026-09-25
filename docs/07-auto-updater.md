@@ -147,15 +147,16 @@ O workflow está em `.github/workflows/release.yml`.
 
 ### Eventos
 
-- Push na branch `master`: testes e compilação dos dois sistemas.
-- Push de tag SemVer (`vMAJOR.MINOR.PATCH`): testes, compilação e criação do
-  release como draft.
-- Pushes em outras branches e eventos de pull request não executam este
-  workflow.
+- Pull request fechado com merge na branch `master`: testes, compilação dos
+  dois sistemas, criação automática da próxima tag patch e criação do release
+  como draft.
+- Pull requests fechados sem merge, pushes diretos e tags criadas manualmente
+  não executam este workflow.
 
-Depois de um merge em `master`, é esperado haver uma execução para o push da
-`master`. Ao criar a tag em seguida, haverá uma segunda execução para o
-release; essa segunda execução é a que cria o draft com os artefatos.
+O workflow consulta a maior tag estável existente (`vMAJOR.MINOR.PATCH`),
+incrementa o campo `PATCH` e cria a nova tag no commit mergeado. Por exemplo,
+depois de `v0.0.1`, o próximo merge gera `v0.0.2`. Como a tag é criada pelo
+`GITHUB_TOKEN`, ela não inicia uma segunda execução do workflow.
 
 ### Ferramentas fixadas
 
@@ -172,18 +173,20 @@ contrato de CI/CD.
 
 ### Etapas
 
-1. valida a tag e deriva a versão;
-2. instala dependências com `npm ci`;
-3. executa o build TypeScript/Vite com npm;
-4. executa `go test -race ./...`;
-5. instala o Wails CLI fixado em `beta.20`;
-6. compila Linux AMD64 em `ubuntu-24.04`;
-7. compila Windows AMD64 em `windows-2025`;
-8. injeta a versão usando `-X main.buildVersion=<versão>`;
-9. transfere os binários entre jobs como artifacts temporários;
-10. confere a presença dos dois payloads;
-11. gera e valida `SHA256SUMS`;
-12. cria o GitHub Release como draft com release notes automáticas.
+1. confirma que o evento é um merge na `master`;
+2. encontra a maior tag estável e calcula a próxima versão patch;
+3. instala dependências com `npm ci`;
+4. executa o build TypeScript/Vite com npm;
+5. executa `go test -race ./...`;
+6. instala o Wails CLI fixado em `beta.20`;
+7. compila Linux AMD64 em `ubuntu-24.04`;
+8. compila Windows AMD64 em `windows-2025`;
+9. injeta a versão usando `-X main.buildVersion=<versão>`;
+10. cria a tag calculada no commit mergeado;
+11. transfere os binários entre jobs como artifacts temporários;
+12. confere a presença dos dois payloads;
+13. gera e valida `SHA256SUMS`;
+14. cria o GitHub Release como draft com release notes automáticas.
 
 Se um draft da mesma tag já existir, o workflow apenas substitui seus assets.
 Se a release já estiver publicada, o workflow falha para não alterar um
@@ -192,18 +195,11 @@ com `contents: read`.
 
 ## Criando um release
 
-1. confirme que o commit destinado ao release está integrado à `master`;
-2. crie e envie uma tag a partir da `master`:
-
-```sh
-git tag v0.2.0
-git push origin v0.2.0
-```
-
-3. acompanhe o workflow `CI and draft release`;
-4. baixe e teste os dois binários do draft;
-5. confira `SHA256SUMS`;
-6. publique manualmente o draft no GitHub.
+1. faça o merge do pull request na `master`;
+2. acompanhe o workflow `CI and draft release`;
+3. baixe e teste os dois binários do draft;
+4. confira `SHA256SUMS`;
+5. publique manualmente o draft no GitHub.
 
 O updater consulta apenas releases publicados. Um draft nunca será oferecido
 aos usuários, permitindo validar os artefatos antes de promovê-los.

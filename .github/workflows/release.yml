@@ -1,40 +1,56 @@
 name: CI and draft release
 
 on:
-  push:
+  pull_request:
     branches:
       - master
-    tags:
-      - "v*.*.*"
+    types: [closed]
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  group: release-master
+  cancel-in-progress: false
 
 jobs:
   prepare:
     name: Resolve version
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.version.outputs.value }}
+      tag: ${{ steps.version.outputs.tag }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
       - id: version
         name: Resolve build version
         shell: bash
         run: |
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            version="${GITHUB_REF_NAME#v}"
-            if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
-              echo "Tag ${GITHUB_REF_NAME} is not valid SemVer" >&2
+          git fetch --force --tags origin
+          latest="$(git tag --list 'v*.*.*' --sort=-v:refname | head -n 1)"
+          if [[ -z "${latest}" ]]; then
+            major=0
+            minor=0
+            patch=0
+          else
+            if [[ ! "${latest}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+              echo "Latest tag ${latest} is not a stable SemVer tag" >&2
               exit 1
             fi
-          else
-            version="0.0.0-dev"
+            major="${BASH_REMATCH[1]}"
+            minor="${BASH_REMATCH[2]}"
+            patch="${BASH_REMATCH[3]}"
           fi
+          patch=$((patch + 1))
+          version="${major}.${minor}.${patch}"
           echo "value=${version}" >> "${GITHUB_OUTPUT}"
+          echo "tag=v${version}" >> "${GITHUB_OUTPUT}"
+          echo "Next release: v${version} (previous: ${latest:-none})"
 
   test:
     name: Tests
@@ -42,6 +58,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
 
       - uses: actions/setup-go@v7
         with:
@@ -86,6 +104,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
 
       - uses: actions/setup-go@v7
         with:
@@ -140,10 +160,40 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  tag-release:
+    name: Create release tag
+    needs: [prepare, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Create or verify release tag
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        shell: bash
+        run: |
+          if git ls-remote --exit-code origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            git fetch origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+            existing_sha="$(git rev-list -n 1 "${RELEASE_TAG}^{commit}")"
+            if [[ "${existing_sha}" != "${MERGE_SHA}" ]]; then
+              echo "Tag ${RELEASE_TAG} already points to ${existing_sha}, expected ${MERGE_SHA}" >&2
+              exit 1
+            fi
+            echo "Tag ${RELEASE_TAG} already exists at ${MERGE_SHA}"
+          else
+            git tag -a "${RELEASE_TAG}" "${MERGE_SHA}" -m "Release ${RELEASE_TAG}"
+            git push origin "${RELEASE_TAG}"
+          fi
+
   draft-release:
     name: Create draft release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [prepare, build]
+    needs: [prepare, build, tag-release]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -167,9 +217,10 @@ jobs:
       - name: Create or update draft release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
         shell: bash
         run: |
-          tag="${GITHUB_REF_NAME}"
+          tag="${RELEASE_TAG}"
           if gh release view "${tag}" --json isDraft --jq '.isDraft' >/tmp/release-draft 2>/dev/null; then
             if [[ "$(cat /tmp/release-draft)" != "true" ]]; then
               echo "Release ${tag} already exists and is not a draft" >&2
