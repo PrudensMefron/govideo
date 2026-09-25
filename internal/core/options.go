@@ -15,6 +15,7 @@ type JobKind string
 const (
 	JobDownload        JobKind = "download"
 	JobLocalConversion JobKind = "local_conversion"
+	JobAudioTrim       JobKind = "audio_trim"
 )
 
 type AudioFormat string

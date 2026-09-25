@@ -7,6 +7,7 @@ import (
 	appsvc "github.com/PrudensMefron/govideo/internal/app"
 	"github.com/PrudensMefron/govideo/internal/core"
 	"github.com/PrudensMefron/govideo/internal/deps"
+	"github.com/PrudensMefron/govideo/internal/desktop/fileopen"
 	appupdate "github.com/PrudensMefron/govideo/internal/desktop/update"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"os"
@@ -44,13 +45,14 @@ type DesktopService struct {
 	jobs         *appsvc.Service
 	deps         *deps.Manager
 	updates      *appupdate.Manager
+	audioEditor  *appsvc.AudioEditor
 	settingsPath string
 	mu           sync.Mutex
 	settings     Settings
 }
 
-func NewDesktopService(a *application.App, j *appsvc.Service, d *deps.Manager, updates *appupdate.Manager, root string) *DesktopService {
-	s := &DesktopService{app: a, jobs: j, deps: d, updates: updates, settingsPath: filepath.Join(root, "state", "settings.json")}
+func NewDesktopService(a *application.App, j *appsvc.Service, d *deps.Manager, updates *appupdate.Manager, editor *appsvc.AudioEditor, root string) *DesktopService {
+	s := &DesktopService{app: a, jobs: j, deps: d, updates: updates, audioEditor: editor, settingsPath: filepath.Join(root, "state", "settings.json")}
 	s.loadSettings()
 	return s
 }
@@ -81,6 +83,34 @@ func (s *DesktopService) CheckForUpdates() (appupdate.Status, error) {
 }
 func (s *DesktopService) SelectInputVideos() ([]string, error) {
 	return s.app.Dialog.OpenFile().SetTitle("Selecionar vídeos").AddFilter("Vídeos", "*.mp4;*.mkv;*.webm;*.mov;*.avi;*.m4v").PromptForMultipleSelection()
+}
+func (s *DesktopService) SelectInputAudio() (string, error) {
+	return s.app.Dialog.OpenFile().SetTitle("Selecionar música").AddFilter("Áudio", "*.mp3;*.m4a;*.opus;*.wav;*.flac;*.ogg;*.aac").PromptForSingleSelection()
+}
+func (s *DesktopService) ListAudioArtifacts() []core.AudioFile { return s.jobs.ListAudioArtifacts() }
+func (s *DesktopService) InspectAudio(ctx context.Context, path string) (core.AudioFile, error) {
+	return s.audioEditor.Inspect(ctx, path)
+}
+func (s *DesktopService) CreateAudioPreview(ctx context.Context, r core.TrimRequest) (appsvc.AudioPreview, error) {
+	return s.audioEditor.CreatePreview(ctx, r)
+}
+func (s *DesktopService) DiscardAudioPreview(id string) error { return s.audioEditor.Discard(id) }
+func (s *DesktopService) SaveAudioPreview(ctx context.Context, r appsvc.SaveAudioRequest) (appsvc.SavedAudio, error) {
+	result, err := s.audioEditor.Save(ctx, r)
+	if err == nil {
+		s.jobs.RecordSavedAudio(result.Path)
+	}
+	return result, err
+}
+func (s *DesktopService) OpenArtifact(path string) error {
+	resolved, err := s.jobs.ResolveArtifact(path)
+	if err != nil {
+		return err
+	}
+	if err := fileopen.Open(resolved); err != nil {
+		return fmt.Errorf("não foi possível abrir o arquivo no aplicativo padrão: %w", err)
+	}
+	return nil
 }
 func (s *DesktopService) SelectDestination(kind string) (string, error) {
 	return s.app.Dialog.OpenFile().CanChooseFiles(false).CanChooseDirectories(true).CanCreateDirectories(true).SetTitle("Selecionar pasta de destino").PromptForSingleSelection()

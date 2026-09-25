@@ -2,6 +2,14 @@
 
 Last documentation update: 2026-09-25.
 
+## Audio trimming and default-app playback (2026-09-25)
+
+- New **Recortar música** operation alongside download/conversion: select an audio artifact from the complete history or a local file through the native picker; inspect with FFprobe; remove seconds from the beginning and backwards from the end.
+- Cancellable FFmpeg previews, bounded to one at a time, support MP3, M4A, Opus, WAV, FLAC, Ogg and AAC. The original is untouched until explicit replacement. A private WAV playback endpoint supports byte-range seeking in the embedded audio player; the saved artifact retains the source container and is encoded once before auditioning.
+- Copies are saved beside the source with `- recortada` and exclusive incremental names. Replacement requires a confirmation dialog, a matching source fingerprint and a complete synchronized temporary file beside the original. Saved edits enter persistent Activities as `audio_trim`.
+- Clicking a completed activity (or activating its title with the keyboard) opens the associated media application. Jobs with multiple outputs offer an explicit choice; folder buttons remain separate. Backend validation rejects missing, untracked and unsupported paths. Windows helpers retain hidden-console flags.
+- Verification: Go race suite; real FFmpeg sample-exact WAV interval and seven-format encoding tests; copy/replacement/cancellation/concurrency/source-change tests; HTTP Range/token isolation tests; frontend production typecheck/build; Linux build and Windows AMD64 cross-build. Chromium with the actual Wails server/backend exercised preview playback/seeking, stale-preview invalidation, validation errors and save-to-history at 1180/760/320px. Native OS pickers, native WebKit/WebView2 playback and Windows file associations still require platform runtime verification.
+
 ## Frontend component cleanup (2026-09-25)
 
 - Split the Vue shell into Home/Activities views, Media/Settings dialogs and an injected application composable, retaining generated Wails bindings.

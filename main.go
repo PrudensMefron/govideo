@@ -6,6 +6,7 @@ import (
 	appsvc "github.com/PrudensMefron/govideo/internal/app"
 	"github.com/PrudensMefron/govideo/internal/core"
 	"github.com/PrudensMefron/govideo/internal/deps"
+	audioweb "github.com/PrudensMefron/govideo/internal/desktop/audio"
 	appupdate "github.com/PrudensMefron/govideo/internal/desktop/update"
 	"github.com/PrudensMefron/govideo/internal/extractor/ytdlp"
 	"github.com/PrudensMefron/govideo/internal/media/ffmpeg"
@@ -31,7 +32,14 @@ func init() {
 	application.RegisterEvent[appupdate.Status]("update:updated")
 }
 func main() {
-	a := application.New(application.Options{Name: "GoVideo", Description: "Baixe e converta mídia com segurança", Assets: application.AssetOptions{Handler: application.AssetFileServerFS(assets)}})
+	mediaEngine := ffmpeg.New("", "")
+	editor, err := appsvc.NewAudioEditor(mediaEngine)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer editor.Close()
+	a := application.New(application.Options{Name: "GoVideo", Description: "Baixe e converta mídia com segurança", Assets: application.AssetOptions{Handler: application.AssetFileServerFS(assets), Middleware: audioweb.Middleware(editor)}})
+	a.OnShutdown(editor.Close)
 	updates, err := appupdate.New(a.Updater, buildVersion, updateRepository)
 	if err != nil {
 		log.Fatal(err)
@@ -44,8 +52,8 @@ func main() {
 	ytAsset, _ := deps.YTDLPAsset()
 	ytPath := filepath.Join(root, "bin", ytAsset.Name)
 	ex := ytdlp.New(ytPath)
-	jobs := appsvc.New(ex, ex, ffmpeg.New("", ""), filepath.Join(root, "state", "jobs.json"), 2, func(j core.Job) { a.Event.Emit("job:updated", j) })
-	service := NewDesktopService(a, jobs, dm, updates, root)
+	jobs := appsvc.New(ex, ex, mediaEngine, filepath.Join(root, "state", "jobs.json"), 2, func(j core.Job) { a.Event.Emit("job:updated", j) })
+	service := NewDesktopService(a, jobs, dm, updates, editor, root)
 	a.RegisterService(application.NewService(service))
 	win := a.Window.NewWithOptions(application.WebviewWindowOptions{Title: "GoVideo", Width: 1180, Height: 760, MinWidth: 760, MinHeight: 560, EnableFileDrop: true, BackgroundColour: application.NewRGB(244, 248, 255), URL: "/"})
 	win.OnWindowEvent(events.Common.WindowFilesDropped, func(e *application.WindowEvent) { a.Event.Emit("files:dropped", e.Context().DroppedFiles()) })

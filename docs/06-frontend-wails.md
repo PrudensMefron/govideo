@@ -205,4 +205,31 @@ Priorities:
 - no web-dashboard bloat;
 - good light/dark behavior eventually.
 
-A component library may be chosen later. Do not couple Core work to that decision.
+DaisyUI is the canonical component library. Do not couple Core work to styling.
+
+## Audio editor and playback bindings
+
+`AudioTrimView` and `useAudioTrim` implement the third Home operation, using
+generated types and these desktop methods:
+
+- `SelectInputAudio`, `ListAudioArtifacts`, `InspectAudio(context, path)`;
+- `CreateAudioPreview(context, core.TrimRequest)` → `app.AudioPreview`;
+- `DiscardAudioPreview(id)`;
+- `SaveAudioPreview(context, app.SaveAudioRequest)` → `app.SavedAudio`;
+- `OpenArtifact(path)` for the associated media application.
+
+Wails injects `context.Context`; callers cancel inspection/rendering through the
+generated `CancellablePromise`. Saving publishes an already rendered file and is
+not cancelled midway by page navigation. Preview regeneration and changing any
+cut invalidate the old token/player. Actual download/conversion execution remains
+in the existing job manager.
+
+The `<audio controls>` source is `/audio-preview/<token>`, handled by the Wails
+asset middleware before both embedded assets and the development proxy. Never
+use a `file://` URL or expose a general filesystem-serving endpoint. WAV is decoded
+from the prepared final artifact to avoid depending on WebView Opus/AAC support.
+The full audio is streamed from disk, not serialized through a binding as base64.
+
+Activities use a native button in the title for keyboard activation and a row
+click for pointer activation. Nested buttons do not propagate into playback;
+multi-output activities use a DaisyUI/native dialog to choose which artifact opens.

@@ -12,6 +12,7 @@ export {
 
 export type {
     Artifact,
+    AudioFile,
     AudioOptions,
     Format,
     Job,
@@ -20,5 +21,6 @@ export type {
     JobProgress,
     Media,
     Source,
+    TrimRequest,
     VideoQuality
 } from "./models.js";

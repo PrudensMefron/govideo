@@ -11,6 +11,14 @@ export interface Artifact {
     "available": boolean;
 }
 
+export interface AudioFile {
+    "path": string;
+    "name": string;
+    "durationSeconds": number;
+    "sizeBytes": number;
+    "format": string;
+}
+
 export enum AudioFormat {
     /**
      * The Go zero value for the underlying type of the enum.
@@ -87,6 +95,7 @@ export enum JobKind {
 
     JobDownload = "download",
     JobLocalConversion = "local_conversion",
+    JobAudioTrim = "audio_trim",
 };
 
 export enum JobPhase {
@@ -157,6 +166,15 @@ export interface Source {
     "url": string;
     "pageURL"?: string;
     "headers"?: { [_ in string]?: string } | null;
+}
+
+/**
+ * TrimRequest removes seconds from either edge, never from an absolute end timestamp.
+ */
+export interface TrimRequest {
+    "path": string;
+    "startSeconds": number;
+    "endSeconds": number;
 }
 
 export interface VideoQuality {

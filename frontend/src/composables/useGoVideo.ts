@@ -32,7 +32,7 @@ type Job = {
     speedBytesPerSecond?: number;
     etaSeconds?: number;
   };
-  artifacts?: { path: string; available: boolean }[];
+  artifacts?: { kind: string; path: string; available: boolean }[];
   failure?: { message: string };
   createdAt: string;
   updatedAt?: string;
@@ -53,7 +53,7 @@ type Dep = {
 };
 export function createGoVideo() {
   const page = ref<"home" | "activity">("home"),
-    mode = ref<"download" | "convert">("download"),
+    mode = ref<"download" | "convert" | "trim">("download"),
     url = ref(""),
     busy = ref(false),
     error = ref(""),
