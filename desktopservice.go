@@ -71,6 +71,9 @@ func (s *DesktopService) StartLocalConversions(r ConversionDTO) ([]core.Job, err
 func (s *DesktopService) ListJobs(offset, limit int) []core.Job {
 	return s.jobs.ListJobs(offset, limit)
 }
+func (s *DesktopService) PruneUnavailableArtifacts(id string) error {
+	return s.jobs.PruneUnavailableArtifacts(core.JobID(id))
+}
 func (s *DesktopService) CancelJob(id string) (core.Job, error) { return s.jobs.Cancel(core.JobID(id)) }
 func (s *DesktopService) RetryJob(id string) (core.Job, error)  { return s.jobs.Retry(core.JobID(id)) }
 func (s *DesktopService) ListDependencies() []deps.Status       { return s.deps.List() }

@@ -5,6 +5,7 @@ import {
   onMounted,
   ref,
   inject,
+  watch,
 } from "vue";
 import { Events } from "@wailsio/runtime";
 import * as api from "../../bindings/github.com/PrudensMefron/govideo/desktopservice";
@@ -148,6 +149,14 @@ export function createGoVideo() {
         "Não foi possível atualizar os dados agora. Tente novamente.";
     }
   }
+  watch(page, async (current) => {
+    if (current !== "activity") return;
+    try {
+      jobs.value = (await api.ListJobs(0, 50)) as Job[];
+    } catch {
+      notice.value = "Não foi possível atualizar as atividades agora.";
+    }
+  });
   async function refreshUpdate() {
     try {
       update.value = (await api.GetUpdateStatus()) as UpdateStatus;
@@ -275,13 +284,17 @@ export function createGoVideo() {
       savingSettings.value = false;
     }
   }
-  async function runJobAction(kind: "cancel" | "retry", id: string) {
+  async function runJobAction(kind: "cancel" | "retry" | "prune", id: string) {
     jobAction.value = `${kind}:${id}`;
     try {
-      kind === "cancel" ? await api.CancelJob(id) : await api.RetryJob(id);
+      if (kind === "cancel") await api.CancelJob(id);
+      else if (kind === "retry") await api.RetryJob(id);
+      else await api.PruneUnavailableArtifacts(id);
       await refresh();
+      return true;
     } catch (e) {
       notice.value = String(e);
+      return false;
     } finally {
       jobAction.value = null;
     }

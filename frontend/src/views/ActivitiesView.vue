@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 import AppIcon from "../components/AppIcon.vue";
 import { useGoVideo } from "../composables/useGoVideo";
 const {
@@ -22,6 +22,7 @@ type Activity = (typeof jobs.value)[number];
 const filesDialog = ref<HTMLDialogElement>();
 const choices = ref<NonNullable<Activity["artifacts"]>>([]);
 const openingPath = ref("");
+const activityTitle = ref<HTMLElement>();
 let trigger: HTMLElement | null = null;
 const outputs = (j: Activity) =>
   j.status === "completed"
@@ -69,13 +70,21 @@ async function reveal(path: string) {
     notice.value = String(e);
   }
 }
+async function removeUnavailable(id: string) {
+  if (await runJobAction("prune", id)) {
+    await nextTick();
+    activityTitle.value?.focus();
+  }
+}
 </script>
 <template>
   <main class="activities" aria-labelledby="activity-title">
     <div class="title">
       <div>
         <span class="eyebrow">CENTRAL DE ATIVIDADES</span>
-        <h1 id="activity-title">Acompanhe o que está acontecendo.</h1>
+        <h1 id="activity-title" ref="activityTitle" tabindex="-1">
+          Acompanhe o que está acontecendo.
+        </h1>
         <p>
           Fila, download, processamento e arquivos concluídos em um só lugar.
         </p>
@@ -127,8 +136,17 @@ async function reveal(path: string) {
           ><small v-if="j.failure" class="text-error"
             ><AppIcon name="warning" />{{ j.failure.message }}</small
           >
-          <small v-if="j.status === 'completed' && !outputs(j).length"
-            >Arquivo indisponível</small
+          <small
+            v-if="
+              j.status === 'completed' &&
+              j.artifacts?.some((a) => !a.available)
+            "
+            class="text-warning"
+            ><AppIcon name="warning" />{{
+              outputs(j).length
+                ? "Parte dos arquivos está indisponível"
+                : "Arquivo indisponível"
+            }}</small
           >
         </div>
         <div class="gv-job-progress">
@@ -229,6 +247,23 @@ async function reveal(path: string) {
               (j.artifacts?.length || 0) > 1
                 ? `Pasta · ${a.kind === "audio" ? "música" : "vídeo"}`
                 : "Abrir pasta"
+            }}
+          </button>
+          <button
+            v-if="
+              j.status === 'completed' &&
+              j.artifacts?.some((a) => !a.available)
+            "
+            class="btn btn-ghost btn-sm text-error"
+            :disabled="!!jobAction"
+            @click.stop="removeUnavailable(j.id)"
+          >
+            <AppIcon name="close" />{{
+              jobAction === `prune:${j.id}`
+                ? "Removendo…"
+                : outputs(j).length
+                  ? "Limpar ausentes"
+                  : "Remover da lista"
             }}
           </button>
         </div>

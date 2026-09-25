@@ -74,6 +74,10 @@ export function OpenArtifactLocation(path: string): $CancellablePromise<void> {
     return $Call.ByID(402823080, path);
 }
 
+export function PruneUnavailableArtifacts(id: string): $CancellablePromise<void> {
+    return $Call.ByID(523818378, id);
+}
+
 export function RetryDependency(name: string): $CancellablePromise<deps$0.Status> {
     return $Call.ByID(1575227952, name);
 }

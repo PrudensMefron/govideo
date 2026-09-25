@@ -8,6 +8,11 @@ The central architectural constraint is:
 
 > Wails and Vue are clients of the application core, not the owners of it.
 
+Completed artifact availability is derived in the application service when jobs
+are listed. Explicit pruning removes unavailable artifact references from the
+persisted history, dropping the activity only if it has no remaining outputs;
+the Wails bridge exposes this operation without touching files on disk.
+
 ## Layers
 
 ```text

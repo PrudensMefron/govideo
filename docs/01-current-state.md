@@ -2,6 +2,12 @@
 
 Last documentation update: 2026-09-25.
 
+## Unavailable activity outputs (2026-09-25)
+
+- Listing activities rechecks completed output files and marks missing or non-regular files unavailable, including files removed while GoVideo remains open.
+- An unavailable activity now offers an explicit removal action. For a multi-output activity, only unavailable output references are removed; the activity and any available files remain. When no output remains, the activity is removed from persistent history.
+- This action never deletes files from disk. The backend rechecks availability immediately before applying it, preventing removal based solely on stale UI state.
+
 ## Audio trimming and default-app playback (2026-09-25)
 
 Native playback follow-up: WebKitGTK reproduced a media-source error for a WAV

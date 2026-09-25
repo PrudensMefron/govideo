@@ -93,11 +93,18 @@ func (s *Service) StartConversions(paths []string, audio core.AudioOptions, dest
 	return out, nil
 }
 func (s *Service) ListJobs(offset, limit int) []core.Job {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	v := make([]core.Job, 0, len(s.jobs))
+	changed := false
 	for _, j := range s.jobs {
+		if j.Status == core.JobCompleted && refreshArtifactAvailability(j) {
+			changed = true
+		}
 		v = append(v, clone(j))
+	}
+	if changed {
+		_ = s.persistLocked()
 	}
 	sort.Slice(v, func(i, j int) bool { return v[i].CreatedAt.After(v[j].CreatedAt) })
 	if offset > len(v) {
@@ -108,6 +115,60 @@ func (s *Service) ListJobs(offset, limit int) []core.Job {
 		v = v[:limit]
 	}
 	return v
+}
+
+// PruneUnavailableArtifacts removes missing outputs from a completed activity.
+// If no output remains, the activity itself is removed from history. Files on
+// disk are never deleted.
+func (s *Service) PruneUnavailableArtifacts(id core.JobID) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	j, ok := s.jobs[id]
+	if !ok {
+		return os.ErrNotExist
+	}
+	if j.Status != core.JobCompleted || len(j.Artifacts) == 0 {
+		return fmt.Errorf("esta atividade não tem arquivos concluídos para remover")
+	}
+	previous := append([]core.Artifact(nil), j.Artifacts...)
+	available := make([]core.Artifact, 0, len(previous))
+	for _, artifact := range previous {
+		if artifactAvailable(artifact.Path) {
+			artifact.Available = true
+			available = append(available, artifact)
+		}
+	}
+	if len(available) == len(previous) {
+		return fmt.Errorf("os arquivos desta atividade ainda estão disponíveis")
+	}
+	if len(available) == 0 {
+		delete(s.jobs, id)
+	} else {
+		j.Artifacts = available
+	}
+	if err := s.persistLocked(); err != nil {
+		s.jobs[id] = j
+		j.Artifacts = previous
+		return fmt.Errorf("não foi possível atualizar o histórico: %w", err)
+	}
+	return nil
+}
+
+func refreshArtifactAvailability(j *core.Job) bool {
+	changed := false
+	for i := range j.Artifacts {
+		available := artifactAvailable(j.Artifacts[i].Path)
+		if j.Artifacts[i].Available != available {
+			j.Artifacts[i].Available = available
+			changed = true
+		}
+	}
+	return changed
+}
+
+func artifactAvailable(path string) bool {
+	info, err := os.Lstat(path)
+	return err == nil && info.Mode().IsRegular()
 }
 func (s *Service) Cancel(id core.JobID) (core.Job, error) {
 	s.mu.Lock()
@@ -317,10 +378,7 @@ func (s *Service) load() {
 			t := now
 			j.FinishedAt = &t
 		}
-		for i := range j.Artifacts {
-			_, err := os.Stat(j.Artifacts[i].Path)
-			j.Artifacts[i].Available = err == nil
-		}
+		refreshArtifactAvailability(j)
 	}
 	s.mu.Lock()
 	_ = s.persistLocked()
