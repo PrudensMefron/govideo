@@ -2,10 +2,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { CancellablePromise } from "@wailsio/runtime";
 import * as api from "../../bindings/github.com/PrudensMefron/govideo/desktopservice";
 import type { AudioFile } from "../../bindings/github.com/PrudensMefron/govideo/internal/core/models";
-import type {
-  AudioPreview,
-  SavedAudio,
-} from "../../bindings/github.com/PrudensMefron/govideo/internal/app/models";
+import type { SavedAudio } from "../../bindings/github.com/PrudensMefron/govideo/internal/app/models";
+import type { AudioPreviewDTO } from "../../bindings/github.com/PrudensMefron/govideo/models";
 
 export function useAudioTrim() {
   const library = ref<AudioFile[]>([]),
@@ -14,13 +12,14 @@ export function useAudioTrim() {
     selectedPath = ref("");
   const startSeconds = ref<number | string>(0),
     endSeconds = ref<number | string>(0);
-  const preview = ref<AudioPreview | null>(null),
+  const preview = ref<AudioPreviewDTO | null>(null),
     saved = ref<SavedAudio | null>(null);
   const busy = ref<"inspect" | "preview" | "save" | null>(null),
     error = ref("");
   const player = ref<HTMLAudioElement>(),
     playbackError = ref("");
   let pending: CancellablePromise<unknown> | undefined;
+  let cleanup: Promise<void> = Promise.resolve();
   let disposed = false,
     cancelled = false;
 
@@ -46,7 +45,7 @@ export function useAudioTrim() {
     return "";
   });
   const previewURL = computed(() =>
-    preview.value ? `/audio-preview/${preview.value.id}` : "",
+    preview.value?.playbackURL || "",
   );
   const formatTime = (seconds: number) => {
     if (!Number.isFinite(seconds) || seconds < 0) return "—";
@@ -64,7 +63,7 @@ export function useAudioTrim() {
     const old = preview.value;
     preview.value = null;
     playbackError.value = "";
-    if (old) void api.DiscardAudioPreview(old.id).catch(() => {});
+    if (old) cleanup = cleanup.then(async () => { await api.DiscardAudioPreview(old.id); }).catch(() => {});
   }
   watch([startSeconds, endSeconds], () => {
     clearPreview();
@@ -124,12 +123,15 @@ export function useAudioTrim() {
     cancelled = false;
     busy.value = "preview";
     try {
+      // Discard and render share a backend operation lock. Never race them.
+      await cleanup;
+      if (disposed || cancelled) return;
       pending = api.CreateAudioPreview({
         path: source.value!.path,
         startSeconds: Number(startSeconds.value),
         endSeconds: Number(endSeconds.value),
       });
-      const result = (await pending) as AudioPreview;
+      const result = (await pending) as AudioPreviewDTO;
       if (disposed || cancelled) {
         await api.DiscardAudioPreview(result.id);
         return;

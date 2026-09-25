@@ -213,7 +213,7 @@ DaisyUI is the canonical component library. Do not couple Core work to styling.
 generated types and these desktop methods:
 
 - `SelectInputAudio`, `ListAudioArtifacts`, `InspectAudio(context, path)`;
-- `CreateAudioPreview(context, core.TrimRequest)` → `app.AudioPreview`;
+- `CreateAudioPreview(context, core.TrimRequest)` → `AudioPreviewDTO`, including `playbackURL`;
 - `DiscardAudioPreview(id)`;
 - `SaveAudioPreview(context, app.SaveAudioRequest)` → `app.SavedAudio`;
 - `OpenArtifact(path)` for the associated media application.
@@ -224,11 +224,16 @@ not cancelled midway by page navigation. Preview regeneration and changing any
 cut invalidate the old token/player. Actual download/conversion execution remains
 in the existing job manager.
 
-The `<audio controls>` source is `/audio-preview/<token>`, handled by the Wails
-asset middleware before both embedded assets and the development proxy. Never
+The `<audio controls>` source comes from `playbackURL`: an ephemeral loopback
+HTTP server at `http://127.0.0.1:<port>/audio-preview/<token>`. This avoids the
+native WebKitGTK media-source failure observed under the Wails custom URI scheme.
+Only token-authorized preview WAVs are served; Host is validated and no external
+network interface is bound. The listener closes on shutdown. Never
 use a `file://` URL or expose a general filesystem-serving endpoint. WAV is decoded
 from the prepared final artifact to avoid depending on WebView Opus/AAC support.
 The full audio is streamed from disk, not serialized through a binding as base64.
+Discard calls are serialized and awaited before regeneration. Test that ordering
+with `node tests/audio-trim.test.cjs` from `frontend/`.
 
 Activities use a native button in the title for keyboard activation and a row
 click for pointer activation. Nested buttons do not propagate into playback;

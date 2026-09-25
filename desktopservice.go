@@ -7,6 +7,7 @@ import (
 	appsvc "github.com/PrudensMefron/govideo/internal/app"
 	"github.com/PrudensMefron/govideo/internal/core"
 	"github.com/PrudensMefron/govideo/internal/deps"
+	audioweb "github.com/PrudensMefron/govideo/internal/desktop/audio"
 	"github.com/PrudensMefron/govideo/internal/desktop/fileopen"
 	appupdate "github.com/PrudensMefron/govideo/internal/desktop/update"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -46,13 +47,15 @@ type DesktopService struct {
 	deps         *deps.Manager
 	updates      *appupdate.Manager
 	audioEditor  *appsvc.AudioEditor
+	audioServer  *audioweb.Server
 	settingsPath string
 	mu           sync.Mutex
 	settings     Settings
 }
 
-func NewDesktopService(a *application.App, j *appsvc.Service, d *deps.Manager, updates *appupdate.Manager, editor *appsvc.AudioEditor, root string) *DesktopService {
+func NewDesktopService(a *application.App, j *appsvc.Service, d *deps.Manager, updates *appupdate.Manager, editor *appsvc.AudioEditor, audioServer *audioweb.Server, root string) *DesktopService {
 	s := &DesktopService{app: a, jobs: j, deps: d, updates: updates, audioEditor: editor, settingsPath: filepath.Join(root, "state", "settings.json")}
+	s.audioServer = audioServer
 	s.loadSettings()
 	return s
 }
@@ -91,8 +94,18 @@ func (s *DesktopService) ListAudioArtifacts() []core.AudioFile { return s.jobs.L
 func (s *DesktopService) InspectAudio(ctx context.Context, path string) (core.AudioFile, error) {
 	return s.audioEditor.Inspect(ctx, path)
 }
-func (s *DesktopService) CreateAudioPreview(ctx context.Context, r core.TrimRequest) (appsvc.AudioPreview, error) {
-	return s.audioEditor.CreatePreview(ctx, r)
+
+type AudioPreviewDTO struct {
+	appsvc.AudioPreview
+	PlaybackURL string `json:"playbackURL"`
+}
+
+func (s *DesktopService) CreateAudioPreview(ctx context.Context, r core.TrimRequest) (AudioPreviewDTO, error) {
+	p, err := s.audioEditor.CreatePreview(ctx, r)
+	if err != nil {
+		return AudioPreviewDTO{}, err
+	}
+	return AudioPreviewDTO{AudioPreview: p, PlaybackURL: s.audioServer.URL(p.ID)}, nil
 }
 func (s *DesktopService) DiscardAudioPreview(id string) error { return s.audioEditor.Discard(id) }
 func (s *DesktopService) SaveAudioPreview(ctx context.Context, r appsvc.SaveAudioRequest) (appsvc.SavedAudio, error) {

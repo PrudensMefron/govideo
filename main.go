@@ -38,8 +38,14 @@ func main() {
 		log.Fatal(err)
 	}
 	defer editor.Close()
-	a := application.New(application.Options{Name: "GoVideo", Description: "Baixe e converta mídia com segurança", Assets: application.AssetOptions{Handler: application.AssetFileServerFS(assets), Middleware: audioweb.Middleware(editor)}})
+	audioServer, err := audioweb.NewServer(editor)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer audioServer.Close()
+	a := application.New(application.Options{Name: "GoVideo", Description: "Baixe e converta mídia com segurança", Assets: application.AssetOptions{Handler: application.AssetFileServerFS(assets)}})
 	a.OnShutdown(editor.Close)
+	a.OnShutdown(audioServer.Close)
 	updates, err := appupdate.New(a.Updater, buildVersion, updateRepository)
 	if err != nil {
 		log.Fatal(err)
@@ -53,7 +59,7 @@ func main() {
 	ytPath := filepath.Join(root, "bin", ytAsset.Name)
 	ex := ytdlp.New(ytPath)
 	jobs := appsvc.New(ex, ex, mediaEngine, filepath.Join(root, "state", "jobs.json"), 2, func(j core.Job) { a.Event.Emit("job:updated", j) })
-	service := NewDesktopService(a, jobs, dm, updates, editor, root)
+	service := NewDesktopService(a, jobs, dm, updates, editor, audioServer, root)
 	a.RegisterService(application.NewService(service))
 	win := a.Window.NewWithOptions(application.WebviewWindowOptions{Title: "GoVideo", Width: 1180, Height: 760, MinWidth: 760, MinHeight: 560, EnableFileDrop: true, BackgroundColour: application.NewRGB(244, 248, 255), URL: "/"})
 	win.OnWindowEvent(events.Common.WindowFilesDropped, func(e *application.WindowEvent) { a.Event.Emit("files:dropped", e.Context().DroppedFiles()) })

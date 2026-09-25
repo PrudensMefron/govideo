@@ -34,7 +34,7 @@ export function CheckForUpdates(): $CancellablePromise<update$0.Status> {
     return $Call.ByID(897995752);
 }
 
-export function CreateAudioPreview(r: core$0.TrimRequest): $CancellablePromise<app$0.AudioPreview> {
+export function CreateAudioPreview(r: core$0.TrimRequest): $CancellablePromise<$models.AudioPreviewDTO> {
     return $Call.ByID(1302150907, r);
 }
 

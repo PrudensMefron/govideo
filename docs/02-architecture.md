@@ -386,15 +386,19 @@ FFmpeg; leaving the editor discards playback and cancels active rendering. A
 successful save records a completed `audio_trim` activity in the existing history.
 
 Private temporary directories hold previews. Only an opaque, random token is
-exposed; `internal/desktop/audio` adapts `OpenPreview(token)` to an asset middleware
-with `http.ServeContent`, GET/HEAD and byte-range seeking. It never accepts raw
+exposed; `internal/desktop/audio` adapts `OpenPreview(token)` to a loopback HTTP server
+with `http.ServeContent`, GET/HEAD and byte-range seeking. Its listener binds only
+`127.0.0.1:0`, checks Host and closes on shutdown. The desktop DTO adds the URL;
+the core never owns transport addresses. It never accepts raw
 paths from HTTP. Preview files are discarded when replaced, explicitly cleared,
 saved or on normal application shutdown; crash leftovers remain OS temporary data.
 
 New copies use exclusive creation. Replacement stages a synchronized file in the
 original directory and rechecks identity/content immediately before rename. No
 background action replaces the original. Editing changes invalidate the frontend
-preview so saved output always corresponds to the tested selection.
+preview so saved output always corresponds to the tested selection. Regeneration
+awaits asynchronous discard before requesting another render, because both use
+the same backend operation lock.
 
 `Service.ResolveArtifact` authorizes completed audio/video outputs before
 `internal/desktop/fileopen` invokes `xdg-open` (Linux) or FileProtocolHandler

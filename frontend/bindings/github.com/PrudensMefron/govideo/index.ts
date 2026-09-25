@@ -8,6 +8,7 @@ export {
 
 export type {
     AnalyzeRequest,
+    AudioPreviewDTO,
     ConversionDTO,
     DownloadDTO,
     Settings

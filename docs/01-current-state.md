@@ -4,6 +4,15 @@ Last documentation update: 2026-09-25.
 
 ## Audio trimming and default-app playback (2026-09-25)
 
+Native playback follow-up: WebKitGTK reproduced a media-source error for a WAV
+served under `wails://`. Preview playback now uses an ephemeral HTTP listener
+bound exclusively to `127.0.0.1`, with opaque tokens, Host validation and Range
+support. A native WebKitGTK test loaded, played, sought and reached the end of a
+test WAV over loopback. Frontend regeneration now waits for prior preview cleanup,
+eliminating the competing discard/render calls that triggered the busy error.
+Regression tests cover that ordering, cancellation during cleanup and loopback
+token/Host/range behavior. Native Windows playback remains unverified.
+
 - New **Recortar música** operation alongside download/conversion: select an audio artifact from the complete history or a local file through the native picker; inspect with FFprobe; remove seconds from the beginning and backwards from the end.
 - Cancellable FFmpeg previews, bounded to one at a time, support MP3, M4A, Opus, WAV, FLAC, Ogg and AAC. The original is untouched until explicit replacement. A private WAV playback endpoint supports byte-range seeking in the embedded audio player; the saved artifact retains the source container and is encoded once before auditioning.
 - Copies are saved beside the source with `- recortada` and exclusive incremental names. Replacement requires a confirmation dialog, a matching source fingerprint and a complete synchronized temporary file beside the original. Saved edits enter persistent Activities as `audio_trim`.
