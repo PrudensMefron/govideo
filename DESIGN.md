@@ -24,3 +24,5 @@ DaisyUI is the canonical component implementation: `btn`, `input`, `select`, `ra
 ## Themes
 
 `govideo-light` and `govideo-dark` map the same semantic tokens. The system preference is applied before Vue mounts; users can override it in Settings.
+
+The shared `AudioPlayer` uses DaisyUI primary-blue play/pause and range controls on a subtle primary-tinted surface. A native audio element handles playback; native range inputs provide keyboard seeking and volume. Avoid styling browser-internal media panels, which differ between WebKitGTK and WebView2.

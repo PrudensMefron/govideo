@@ -218,6 +218,17 @@ Avoid one giant generic installer with dozens of switches if per-tool behavior d
 
 ## Concurrency
 
+Audio trimming requires `ffmpeg` and `ffprobe` on PATH, like local conversion.
+The build must include `libmp3lame`, native `aac`, `libopus`, `libvorbis`, `flac`
+and `pcm_s16le` to support all editor formats. Cuts use decoding/re-encoding
+(`-ss` after input, `-t` for retained duration) rather than packet copying.
+Metadata tags are copied; cover-art/video streams and chapters are not retained.
+Compressed formats may include encoder padding. See the [FFmpeg option reference](https://ffmpeg.org/ffmpeg.html).
+
+Preview auditioning uses a temporary 48kHz stereo PCM WAV, requiring additional
+temporary disk space proportional to duration. Only one preview render/save can
+run at a time. These processes also use the Windows hidden-console launcher.
+
 Only one installation/update per dependency should run at a time.
 
 Two simultaneous GUI requests must not race to replace `yt-dlp`.

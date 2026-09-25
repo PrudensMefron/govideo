@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppIcon from "../components/AppIcon.vue";
+import AudioTrimView from "./AudioTrimView.vue";
 import { useGoVideo } from "../composables/useGoVideo";
 const {
   mode,
@@ -31,6 +32,13 @@ const {
         @click="mode = 'convert'"
       >
         <AppIcon name="audio" />Converter vídeo em música
+      </button>
+      <button
+        class="btn join-item"
+        :aria-pressed="mode === 'trim'"
+        @click="mode = 'trim'"
+      >
+        <AppIcon name="scissors" />Recortar música
       </button>
     </div>
 
@@ -92,7 +100,7 @@ const {
     </section>
 
     <section
-      v-else
+      v-else-if="mode === 'convert'"
       class="workspace"
       data-file-drop-target
       aria-labelledby="convert-title"
@@ -155,5 +163,6 @@ const {
         </button>
       </div>
     </section>
+    <AudioTrimView v-else />
   </main>
 </template>

@@ -2,6 +2,34 @@
 
 Last documentation update: 2026-09-25.
 
+## Unavailable activity outputs (2026-09-25)
+
+- Listing activities rechecks completed output files and marks missing or non-regular files unavailable, including files removed while GoVideo remains open.
+- An unavailable activity now offers an explicit removal action. For a multi-output activity, only unavailable output references are removed; the activity and any available files remain. When no output remains, the activity is removed from persistent history.
+- This action never deletes files from disk. The backend rechecks availability immediately before applying it, preventing removal based solely on stale UI state.
+
+## Audio trimming and default-app playback (2026-09-25)
+
+Native playback follow-up: WebKitGTK reproduced a media-source error for a WAV
+served under `wails://`. Preview playback now uses an ephemeral HTTP listener
+bound exclusively to `127.0.0.1`, with opaque tokens, Host validation and Range
+support. A native WebKitGTK test loaded, played, sought and reached the end of a
+test WAV over loopback. Frontend regeneration now waits for prior preview cleanup,
+eliminating the competing discard/render calls that triggered the busy error.
+Regression tests cover that ordering, cancellation during cleanup and loopback
+token/Host/range behavior. Native Windows playback remains unverified.
+
+The preview player now uses the shared `AudioPlayer` Vue component: DaisyUI blue
+play/pause and range controls for position/volume, with a themed blue surface.
+The same HTML audio element and loopback stream still handle decoding/playback.
+Native WebKitGTK verification covered play, pause, seeking and light/dark rendering.
+
+- New **Recortar música** operation alongside download/conversion: select an audio artifact from the complete history or a local file through the native picker; inspect with FFprobe; remove seconds from the beginning and backwards from the end.
+- Cancellable FFmpeg previews, bounded to one at a time, support MP3, M4A, Opus, WAV, FLAC, Ogg and AAC. The original is untouched until explicit replacement. A private WAV playback endpoint supports byte-range seeking in the embedded audio player; the saved artifact retains the source container and is encoded once before auditioning.
+- Copies are saved beside the source with `- recortada` and exclusive incremental names. Replacement requires a confirmation dialog, a matching source fingerprint and a complete synchronized temporary file beside the original. Saved edits enter persistent Activities as `audio_trim`.
+- Clicking a completed activity (or activating its title with the keyboard) opens the associated media application. Jobs with multiple outputs offer an explicit choice; folder buttons remain separate. Backend validation rejects missing, untracked and unsupported paths. Windows helpers retain hidden-console flags.
+- Verification: Go race suite; real FFmpeg sample-exact WAV interval and seven-format encoding tests; copy/replacement/cancellation/concurrency/source-change tests; HTTP Range/token isolation tests; frontend production typecheck/build; Linux build and Windows AMD64 cross-build. Chromium with the actual Wails server/backend exercised preview playback/seeking, stale-preview invalidation, validation errors and save-to-history at 1180/760/320px. Native OS pickers, native WebKit/WebView2 playback and Windows file associations still require platform runtime verification.
+
 ## Frontend component cleanup (2026-09-25)
 
 - Split the Vue shell into Home/Activities views, Media/Settings dialogs and an injected application composable, retaining generated Wails bindings.

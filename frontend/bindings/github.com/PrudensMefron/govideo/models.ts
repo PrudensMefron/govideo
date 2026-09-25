@@ -9,6 +9,15 @@ export interface AnalyzeRequest {
     "url": string;
 }
 
+export interface AudioPreviewDTO {
+    "id": string;
+    "source": core$0.AudioFile;
+    "startSeconds": number;
+    "endSeconds": number;
+    "durationSeconds": number;
+    "playbackURL": string;
+}
+
 export interface ConversionDTO {
     "paths": string[] | null;
     "audioFormat": core$0.AudioFormat;

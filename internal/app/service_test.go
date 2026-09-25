@@ -82,3 +82,79 @@ func TestInterruptedJobRecovery(t *testing.T) {
 		t.Fatalf("%+v", got)
 	}
 }
+
+func TestPruneUnavailableActivityPersistsRemoval(t *testing.T) {
+	dir := t.TempDir()
+	history := filepath.Join(dir, "jobs.json")
+	file := filepath.Join(dir, "song.mp3")
+	if err := os.WriteFile(file, []byte("audio"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	s := New(nil, nil, nil, history, 1, nil)
+	s.RecordSavedAudio(file)
+	id := s.ListJobs(0, 10)[0].ID
+	if err := s.PruneUnavailableArtifacts(id); err == nil {
+		t.Fatal("available file must not be removed from history")
+	}
+	if err := os.Remove(file); err != nil {
+		t.Fatal(err)
+	}
+	jobs := s.ListJobs(0, 10)
+	if len(jobs) != 1 || jobs[0].Artifacts[0].Available {
+		t.Fatalf("missing file should be marked unavailable: %+v", jobs)
+	}
+	if err := s.PruneUnavailableArtifacts(id); err != nil {
+		t.Fatal(err)
+	}
+	if got := s.ListJobs(0, 10); len(got) != 0 {
+		t.Fatalf("activity was not removed: %+v", got)
+	}
+	reopened := New(nil, nil, nil, history, 1, nil)
+	if got := reopened.ListJobs(0, 10); len(got) != 0 {
+		t.Fatalf("removed activity returned after restart: %+v", got)
+	}
+}
+
+func TestPruneUnavailableArtifactKeepsAvailableOutput(t *testing.T) {
+	dir := t.TempDir()
+	history := filepath.Join(dir, "jobs.json")
+	video := filepath.Join(dir, "video.mp4")
+	music := filepath.Join(dir, "music.mp3")
+	if err := os.WriteFile(video, []byte("video"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(music, []byte("music"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	id := core.JobID("both")
+	seed := map[core.JobID]*core.Job{id: {
+		ID: id, Status: core.JobCompleted, CreatedAt: now, UpdatedAt: now,
+		Artifacts: []core.Artifact{{Kind: core.OutputVideo, Path: video}, {Kind: core.OutputAudio, Path: music}},
+	}}
+	b, err := json.Marshal(seed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(history, b, 0600); err != nil {
+		t.Fatal(err)
+	}
+	s := New(nil, nil, nil, history, 1, nil)
+	if err := os.Remove(music); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.PruneUnavailableArtifacts(id); err != nil {
+		t.Fatal(err)
+	}
+	got := s.ListJobs(0, 10)
+	if len(got) != 1 || len(got[0].Artifacts) != 1 || got[0].Artifacts[0].Path != video || !got[0].Artifacts[0].Available {
+		t.Fatalf("available output was not preserved: %+v", got)
+	}
+	if _, err := os.Stat(video); err != nil {
+		t.Fatalf("pruning must not delete files: %v", err)
+	}
+	reopened := New(nil, nil, nil, history, 1, nil)
+	if got := reopened.ListJobs(0, 10); len(got) != 1 || len(got[0].Artifacts) != 1 {
+		t.Fatalf("partial pruning did not persist: %+v", got)
+	}
+}

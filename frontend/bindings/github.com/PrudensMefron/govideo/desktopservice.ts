@@ -7,6 +7,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as app$0 from "./internal/app/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as core$0 from "./internal/core/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -31,12 +34,28 @@ export function CheckForUpdates(): $CancellablePromise<update$0.Status> {
     return $Call.ByID(897995752);
 }
 
+export function CreateAudioPreview(r: core$0.TrimRequest): $CancellablePromise<$models.AudioPreviewDTO> {
+    return $Call.ByID(1302150907, r);
+}
+
+export function DiscardAudioPreview(id: string): $CancellablePromise<void> {
+    return $Call.ByID(1534126967, id);
+}
+
 export function GetSettings(): $CancellablePromise<$models.Settings> {
     return $Call.ByID(682518218);
 }
 
 export function GetUpdateStatus(): $CancellablePromise<update$0.Status> {
     return $Call.ByID(1848269000);
+}
+
+export function InspectAudio(path: string): $CancellablePromise<core$0.AudioFile> {
+    return $Call.ByID(3814063011, path);
+}
+
+export function ListAudioArtifacts(): $CancellablePromise<core$0.AudioFile[] | null> {
+    return $Call.ByID(495849232);
 }
 
 export function ListDependencies(): $CancellablePromise<deps$0.Status[] | null> {
@@ -47,8 +66,16 @@ export function ListJobs(offset: number, limit: number): $CancellablePromise<cor
     return $Call.ByID(1215280705, offset, limit);
 }
 
+export function OpenArtifact(path: string): $CancellablePromise<void> {
+    return $Call.ByID(18827823, path);
+}
+
 export function OpenArtifactLocation(path: string): $CancellablePromise<void> {
     return $Call.ByID(402823080, path);
+}
+
+export function PruneUnavailableArtifacts(id: string): $CancellablePromise<void> {
+    return $Call.ByID(523818378, id);
 }
 
 export function RetryDependency(name: string): $CancellablePromise<deps$0.Status> {
@@ -59,8 +86,16 @@ export function RetryJob(id: string): $CancellablePromise<core$0.Job> {
     return $Call.ByID(2692776144, id);
 }
 
+export function SaveAudioPreview(r: app$0.SaveAudioRequest): $CancellablePromise<app$0.SavedAudio> {
+    return $Call.ByID(1793814222, r);
+}
+
 export function SelectDestination(kind: string): $CancellablePromise<string> {
     return $Call.ByID(1105804423, kind);
+}
+
+export function SelectInputAudio(): $CancellablePromise<string> {
+    return $Call.ByID(4184001247);
 }
 
 export function SelectInputVideos(): $CancellablePromise<string[] | null> {

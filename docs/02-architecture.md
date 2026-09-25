@@ -8,6 +8,11 @@ The central architectural constraint is:
 
 > Wails and Vue are clients of the application core, not the owners of it.
 
+Completed artifact availability is derived in the application service when jobs
+are listed. Explicit pruning removes unavailable artifact references from the
+persisted history, dropping the activity only if it has no remaining outputs;
+the Wails bridge exposes this operation without touching files on disk.
+
 ## Layers
 
 ```text
@@ -371,3 +376,35 @@ core -> ffmpeg command implementation
 `internal/app` owns orchestration, bounded execution and persistence; `internal/deps` owns dependency state and managed yt-dlp; `internal/extractor/ytdlp` owns inspection/download; `internal/media/ffmpeg` owns local conversion; and `internal/platformfs` owns collision-safe output allocation. `desktopservice.go` is the Wails-only DTO/dialog adapter. A “both” request remains one job while the application layer runs video and audio as separate argument-safe invocations.
 
 All adapters create subprocesses through `internal/process.CommandContext`. Its Windows implementation combines `syscall.SysProcAttr.HideWindow` with the `CREATE_NO_WINDOW` creation flag, so direct engine execution never opens a console window.
+
+## Audio editing boundary
+
+`core.TrimRequest` defines seconds to remove from the start/end. `core.TrimDuration`
+validates finite nonnegative values and requires at least 100ms of retained audio.
+`app.AudioEditor` coordinates the `AudioEngine` port: probe, encode the retained
+interval, then decode that encoded artifact to WAV for WebView auditioning. The
+FFmpeg adapter owns codecs/arguments; application/core code has no Wails imports.
+
+Previews are a separate ephemeral editing session, not queued downloads. One
+render/save may execute at a time. Cancellation flows from Wails call context to
+FFmpeg; leaving the editor discards playback and cancels active rendering. A
+successful save records a completed `audio_trim` activity in the existing history.
+
+Private temporary directories hold previews. Only an opaque, random token is
+exposed; `internal/desktop/audio` adapts `OpenPreview(token)` to a loopback HTTP server
+with `http.ServeContent`, GET/HEAD and byte-range seeking. Its listener binds only
+`127.0.0.1:0`, checks Host and closes on shutdown. The desktop DTO adds the URL;
+the core never owns transport addresses. It never accepts raw
+paths from HTTP. Preview files are discarded when replaced, explicitly cleared,
+saved or on normal application shutdown; crash leftovers remain OS temporary data.
+
+New copies use exclusive creation. Replacement stages a synchronized file in the
+original directory and rechecks identity/content immediately before rename. No
+background action replaces the original. Editing changes invalidate the frontend
+preview so saved output always corresponds to the tested selection. Regeneration
+awaits asynchronous discard before requesting another render, because both use
+the same backend operation lock.
+
+`Service.ResolveArtifact` authorizes completed audio/video outputs before
+`internal/desktop/fileopen` invokes `xdg-open` (Linux) or FileProtocolHandler
+(Windows) via argument slices and the shared hidden-console process launcher.
