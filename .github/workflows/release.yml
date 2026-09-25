@@ -170,6 +170,8 @@ jobs:
           MERGE_SHA: ${{ github.sha }}
         shell: bash
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
             git fetch origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
             existing_sha="$(git rev-list -n 1 "${RELEASE_TAG}^{commit}")"
