@@ -11,6 +11,7 @@ defineProps<{
     | "home"
     | "link"
     | "play"
+    | "pause"
     | "refresh"
     | "settings"
     | "scissors"
@@ -67,6 +68,9 @@ defineProps<{
       <path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1" />
     </template>
     <template v-else-if="name === 'play'"><path d="m9 6 9 6-9 6Z" /></template>
+    <template v-else-if="name === 'pause'">
+      <path d="M9 5v14M15 5v14" />
+    </template>
     <template v-else-if="name === 'scissors'">
       <circle cx="6" cy="6" r="3" />
       <circle cx="6" cy="18" r="3" />

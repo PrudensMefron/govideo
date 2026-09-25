@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import AppIcon from "../components/AppIcon.vue";
+import AudioPlayer from "../components/AudioPlayer.vue";
 import { useAudioTrim } from "../composables/useAudioTrim";
 const {
   library,
@@ -202,18 +203,15 @@ async function confirmOverwrite() {
       <p class="gv-trim-help">
         Use o player para conferir o começo e avançar até o final.
       </p>
-      <audio
-        ref="player"
+      <AudioPlayer
         :key="preview.id"
         :src="previewURL"
-        controls
-        preload="metadata"
-        aria-label="Prévia da música recortada"
+        @ready="player = $event"
         @error="
           playbackError =
             'Não foi possível reproduzir a prévia. Gere-a novamente para tentar outra vez.'
         "
-      ></audio>
+      />
       <p v-if="playbackError" class="text-error" role="alert">
         {{ playbackError }}
       </p>

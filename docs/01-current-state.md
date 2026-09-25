@@ -13,6 +13,11 @@ eliminating the competing discard/render calls that triggered the busy error.
 Regression tests cover that ordering, cancellation during cleanup and loopback
 token/Host/range behavior. Native Windows playback remains unverified.
 
+The preview player now uses the shared `AudioPlayer` Vue component: DaisyUI blue
+play/pause and range controls for position/volume, with a themed blue surface.
+The same HTML audio element and loopback stream still handle decoding/playback.
+Native WebKitGTK verification covered play, pause, seeking and light/dark rendering.
+
 - New **Recortar música** operation alongside download/conversion: select an audio artifact from the complete history or a local file through the native picker; inspect with FFprobe; remove seconds from the beginning and backwards from the end.
 - Cancellable FFmpeg previews, bounded to one at a time, support MP3, M4A, Opus, WAV, FLAC, Ogg and AAC. The original is untouched until explicit replacement. A private WAV playback endpoint supports byte-range seeking in the embedded audio player; the saved artifact retains the source container and is encoded once before auditioning.
 - Copies are saved beside the source with `- recortada` and exclusive incremental names. Replacement requires a confirmation dialog, a matching source fingerprint and a complete synchronized temporary file beside the original. Saved edits enter persistent Activities as `audio_trim`.

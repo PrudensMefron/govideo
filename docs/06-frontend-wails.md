@@ -224,7 +224,10 @@ not cancelled midway by page navigation. Preview regeneration and changing any
 cut invalidate the old token/player. Actual download/conversion execution remains
 in the existing job manager.
 
-The `<audio controls>` source comes from `playbackURL`: an ephemeral loopback
+The shared `AudioPlayer` wraps an HTML audio element with DaisyUI play/pause and
+native range inputs for keyboard seeking/volume. It exposes that element to the
+editor for cleanup before saving or regenerating; theme colors use primary tokens.
+Its source comes from `playbackURL`: an ephemeral loopback
 HTTP server at `http://127.0.0.1:<port>/audio-preview/<token>`. This avoids the
 native WebKitGTK media-source failure observed under the Wails custom URI scheme.
 Only token-authorized preview WAVs are served; Host is validated and no external
