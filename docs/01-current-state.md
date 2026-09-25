@@ -1,6 +1,14 @@
 # GoVideo — Current State
 
-Last documentation update: 2026-09-24.
+Last documentation update: 2026-09-25.
+
+## Frontend component cleanup (2026-09-25)
+
+- Split the Vue shell into Home/Activities views, Media/Settings dialogs and an injected application composable, retaining generated Wails bindings.
+- DaisyUI owns buttons, inputs, selects, radios, badges, alerts, modal surfaces and radial progress. Removed accumulated stylesheet overrides and collisions with reserved `progress`/`status` classes.
+- Activity rows reserve consistent columns for title, progress and actions; narrow layouts explicitly place each grid item. Progress is blue while running and green when completed; unknown totals have no fabricated numeric percentage. Terminal rows omit stale phase/speed/ETA.
+- Settings support saving/error feedback and discard unsaved edits on close; analysis captures the focus-return target before asynchronous work.
+- Verified production typecheck/build and rendered Chromium fixtures at 1190, 760 and 320px, including real radial dimensions/colors, responsive layout, light/dark dialogs, Escape and focus restoration. This does not replace native Wails/Linux/Windows or real download end-to-end verification.
 
 ## Implemented MVP foundation (verified in this working tree)
 

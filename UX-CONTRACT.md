@@ -4,6 +4,10 @@ Native selects are intentional: GoVideo accepts platform-owned popup geometry be
 
 | Capability | Canonical owner | Source of truth | Allowed variants | Verification |
 |---|---|---|---|---|
-| Select/Listbox | Native `select` | `frontend/src/App.vue` | Compact form fields | Keyboard and platform popup check |
-| Form | Vue semantic form controls | `frontend/src/App.vue` | URL, media options, settings | Typecheck and keyboard check |
+| Select/Listbox | DaisyUI `select` on native `select` | HomeView, MediaDialog, SettingsDialog | Compact form fields | Keyboard and platform popup check |
+| Form | DaisyUI `input`, `radio`, `btn` | `frontend/src/views/`, `frontend/src/components/` | URL, media options, settings | Typecheck and keyboard check |
+| Job progress | DaisyUI `radial-progress` | `frontend/src/views/ActivitiesView.vue` | Blue active, green completed, unknown total without numeric value | Render fixtures at desktop and narrow widths |
+| Modal | Native dialog + DaisyUI `modal` / `modal-box` | MediaDialog, SettingsDialog | Scrollable body, fixed header/footer | Escape, focus return, overflow |
 | Scrollbar | Global CSS baseline | `frontend/src/style.css` | Browser engine fallback | Narrow/overflow check |
+
+Do not use DaisyUI component names (`progress`, `status`) for unrelated layout wrappers. Activity layout uses `gv-job-progress` and explicit grid placement so DaisyUI list-row rules cannot overlap content at responsive breakpoints. Business state and Wails subscriptions belong to `useGoVideo`, not view components.
