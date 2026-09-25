@@ -158,6 +158,8 @@ depois de `v0.0.1`, o próximo merge gera `v0.0.2`. Como a tag é criada pelo
 `GITHUB_TOKEN`, ela não inicia uma segunda execução do workflow.
 Ela é uma tag anotada com a identidade `github-actions[bot]`; a autenticação
 do push continua sendo feita pelo `GITHUB_TOKEN`, sem credenciais pessoais.
+O job de release informa o repositório explicitamente ao GitHub CLI, portanto
+não depende de um checkout ou de um diretório `.git`.
 
 ### Ferramentas fixadas
 
