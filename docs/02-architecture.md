@@ -13,6 +13,13 @@ are listed. Explicit pruning removes unavailable artifact references from the
 persisted history, dropping the activity only if it has no remaining outputs;
 the Wails bridge exposes this operation without touching files on disk.
 
+The yt-dlp adapter receives a thread-safe browser resolver at composition time.
+The resolver reads the saved settings and delegates system browser discovery to
+`internal/browser` (Linux XDG associations / Windows user registry). Both probing
+and downloading obtain cookie-source arguments from this resolver. Core media
+types and job persistence contain no browser cookie data. yt-dlp errors expose
+safe user-facing messages to the job manager without importing the adapter there.
+
 ## Layers
 
 ```text

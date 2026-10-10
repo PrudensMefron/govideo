@@ -16,6 +16,11 @@ func (a *Adapter) Download(ctx context.Context, request core.DownloadRequest, em
 	if err != nil {
 		return err
 	}
+	cookies, err := a.cookieArgs(ctx)
+	if err != nil {
+		return err
+	}
+	args = append(cookies, args...)
 	cmd := process.CommandContext(ctx, a.binary, args...)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -43,7 +48,10 @@ func (a *Adapter) Download(ctx context.Context, request core.DownloadRequest, em
 		return err
 	}
 	if err = cmd.Wait(); err != nil {
-		return &CommandError{Err: err, Stderr: stderr.String()}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		return &CommandError{Err: err, Stderr: stderr.String(), UsesBrowserCookies: len(cookies) > 0}
 	}
 	return nil
 }

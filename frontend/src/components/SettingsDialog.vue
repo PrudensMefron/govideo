@@ -99,6 +99,35 @@ import * as api from "../../bindings/github.com/PrudensMefron/govideo/desktopser
             }}
           </button>
         </div>
+        <h3>Navegador para downloads</h3>
+        <p class="section-help" id="cookie-browser-help">
+          Usa os cookies do navegador para analisar e baixar vídeos. Acesse o
+          YouTube nesse navegador antes de tentar novamente.
+        </p>
+        <label>
+          Navegador
+          <select
+            class="select w-full"
+            v-model="settings.cookieBrowser"
+            aria-describedby="cookie-browser-help cookie-browser-limitations"
+          >
+            <option value="system">Padrão do sistema</option>
+            <option value="firefox">Firefox</option>
+            <option value="chrome">Google Chrome</option>
+            <option value="chromium">Chromium</option>
+            <option value="edge">Microsoft Edge</option>
+            <option value="brave">Brave</option>
+            <option value="opera">Opera</option>
+            <option value="vivaldi">Vivaldi</option>
+            <option value="whale">Whale</option>
+          </select>
+        </label>
+        <p class="section-help" id="cookie-browser-limitations">
+          Se os cookies estiverem bloqueados, feche o navegador e tente novamente.
+          No Windows, a criptografia de alguns navegadores pode impedir a leitura;
+          nesse caso, experimente Firefox. Cookies não garantem que o YouTube
+          libere um bloqueio temporário.
+        </p>
         <h3>Pastas padrão</h3>
         <label
           v-for="k in [

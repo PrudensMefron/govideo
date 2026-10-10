@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	appsvc "github.com/PrudensMefron/govideo/internal/app"
+	"github.com/PrudensMefron/govideo/internal/browser"
 	"github.com/PrudensMefron/govideo/internal/core"
 	"github.com/PrudensMefron/govideo/internal/deps"
 	audioweb "github.com/PrudensMefron/govideo/internal/desktop/audio"
@@ -40,6 +41,7 @@ type Settings struct {
 	MusicDirectory      string `json:"musicDirectory"`
 	ConversionDirectory string `json:"conversionDirectory"`
 	Theme               string `json:"theme"`
+	CookieBrowser       string `json:"cookieBrowser"`
 }
 type DesktopService struct {
 	app          *application.App
@@ -139,6 +141,9 @@ func (s *DesktopService) OpenArtifactLocation(path string) error {
 }
 func (s *DesktopService) GetSettings() Settings { s.mu.Lock(); defer s.mu.Unlock(); return s.settings }
 func (s *DesktopService) UpdateSettings(v Settings) (Settings, error) {
+	if err := browser.Validate(v.CookieBrowser); err != nil {
+		return Settings{}, err
+	}
 	for _, p := range []string{v.VideoDirectory, v.MusicDirectory, v.ConversionDirectory} {
 		if strings.TrimSpace(p) == "" {
 			return Settings{}, fmt.Errorf("destination cannot be empty")
@@ -149,7 +154,6 @@ func (s *DesktopService) UpdateSettings(v Settings) (Settings, error) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.settings = v
 	b, _ := json.MarshalIndent(v, "", "  ")
 	if err := os.MkdirAll(filepath.Dir(s.settingsPath), 0755); err != nil {
 		return Settings{}, err
@@ -161,12 +165,13 @@ func (s *DesktopService) UpdateSettings(v Settings) (Settings, error) {
 	if err := os.Rename(tmp, s.settingsPath); err != nil {
 		return Settings{}, err
 	}
+	s.settings = v
 	return v, nil
 }
 func (s *DesktopService) loadSettings() {
 	base, _ := os.UserHomeDir()
 	downloads := filepath.Join(base, "Downloads", "GoVideo")
-	s.settings = Settings{VideoDirectory: filepath.Join(downloads, "Videos"), MusicDirectory: filepath.Join(downloads, "Musicas"), ConversionDirectory: filepath.Join(downloads, "Conversoes"), Theme: "system"}
+	s.settings = Settings{VideoDirectory: filepath.Join(downloads, "Videos"), MusicDirectory: filepath.Join(downloads, "Musicas"), ConversionDirectory: filepath.Join(downloads, "Conversoes"), Theme: "system", CookieBrowser: "system"}
 	b, err := os.ReadFile(s.settingsPath)
 	if err == nil {
 		_ = json.Unmarshal(b, &s.settings)

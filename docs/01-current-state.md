@@ -1,6 +1,14 @@
 # GoVideo — Current State
 
-Last documentation update: 2026-09-25.
+Last documentation update: 2026-10-10.
+
+## Browser cookies for online media (2026-10-10)
+
+- Analysis and every online download use yt-dlp's `--cookies-from-browser`, resolved from the current saved browser preference. Settings default to the system HTTPS browser; users can override it with Firefox, Chrome, Chromium, Edge, Brave, Opera, Vivaldi or Whale.
+- Linux detection uses `xdg-mime query default x-scheme-handler/https`; Windows reads the current user's HTTPS UserChoice ProgId. Unknown defaults require an explicit supported selection, instead of retrying anonymously.
+- GoVideo stores only the browser preference, never exports a cookies file, and shows safe guidance for cookie extraction errors and continued YouTube blocking. Existing settings migrate to the system preference. Changes affect subsequent invocations without restarting.
+- Browser database access/decryption is delegated to yt-dlp using its default profile selection. Windows Chromium app-bound encryption may prevent access; choose Firefox when necessary. Cookies cannot guarantee removal of site rate limits or bot checks.
+- Verification: Go race suite, frontend production typecheck/build and Windows AMD64 cross-build. Tests cover browser identifiers, explicit overrides, Linux detection, actual probe/video/audio argument propagation with a fake executable, configuration refresh, settings migration/persistence and sanitized errors. Real account sessions and native Windows cookie decryption remain platform runtime checks.
 
 ## Unavailable activity outputs (2026-09-25)
 

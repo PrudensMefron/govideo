@@ -306,6 +306,10 @@ func (s *Service) finish(id core.JobID, err error) {
 		} else {
 			_ = j.Transition(core.JobFailed, time.Now())
 			j.Failure = &core.JobError{Code: "operation_failed", Message: "Não foi possível concluir a operação.", Details: err.Error()}
+			var userError interface{ UserMessage() string }
+			if errors.As(err, &userError) {
+				j.Failure.Message = userError.UserMessage()
+			}
 		}
 	} else {
 		j.Progress.Phase = core.PhaseFinalizing

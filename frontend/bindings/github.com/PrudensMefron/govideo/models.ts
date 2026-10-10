@@ -40,4 +40,5 @@ export interface Settings {
     "musicDirectory": string;
     "conversionDirectory": string;
     "theme": string;
+    "cookieBrowser": string;
 }
