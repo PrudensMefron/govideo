@@ -43,6 +43,7 @@ type Settings = {
   musicDirectory: string;
   conversionDirectory: string;
   theme: string;
+  cookieBrowser: string;
 };
 type Dep = {
   name: string;
@@ -68,6 +69,7 @@ export function createGoVideo() {
       musicDirectory: "",
       conversionDirectory: "",
       theme: "system",
+      cookieBrowser: "system",
     }),
     update = ref<UpdateStatus | null>(null),
     checkingUpdate = ref(false),

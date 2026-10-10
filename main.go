@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	appsvc "github.com/PrudensMefron/govideo/internal/app"
+	"github.com/PrudensMefron/govideo/internal/browser"
 	"github.com/PrudensMefron/govideo/internal/core"
 	"github.com/PrudensMefron/govideo/internal/deps"
 	audioweb "github.com/PrudensMefron/govideo/internal/desktop/audio"
@@ -60,6 +61,9 @@ func main() {
 	ex := ytdlp.New(ytPath)
 	jobs := appsvc.New(ex, ex, mediaEngine, filepath.Join(root, "state", "jobs.json"), 2, func(j core.Job) { a.Event.Emit("job:updated", j) })
 	service := NewDesktopService(a, jobs, dm, updates, editor, audioServer, root)
+	ex.SetCookieBrowser(func(ctx context.Context) (string, error) {
+		return browser.Resolve(ctx, service.GetSettings().CookieBrowser)
+	})
 	a.RegisterService(application.NewService(service))
 	win := a.Window.NewWithOptions(application.WebviewWindowOptions{Title: "GoVideo", Width: 1180, Height: 760, MinWidth: 760, MinHeight: 560, EnableFileDrop: true, BackgroundColour: application.NewRGB(244, 248, 255), URL: "/"})
 	win.OnWindowEvent(events.Common.WindowFilesDropped, func(e *application.WindowEvent) { a.Event.Emit("files:dropped", e.Context().DroppedFiles()) })

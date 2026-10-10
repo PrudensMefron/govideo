@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/PrudensMefron/govideo/internal/core"
 	"github.com/PrudensMefron/govideo/internal/process"
@@ -19,8 +20,32 @@ const (
 )
 
 type Adapter struct {
-	binary string
-	format string
+	binary        string
+	format        string
+	mu            sync.RWMutex
+	cookieBrowser func(context.Context) (string, error)
+}
+
+// SetCookieBrowser configures a resolver called for every analysis/download.
+// It returns a browser identifier, never cookie contents.
+func (a *Adapter) SetCookieBrowser(resolve func(context.Context) (string, error)) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.cookieBrowser = resolve
+}
+
+func (a *Adapter) cookieArgs(ctx context.Context) ([]string, error) {
+	a.mu.RLock()
+	resolve := a.cookieBrowser
+	a.mu.RUnlock()
+	if resolve == nil {
+		return nil, nil
+	}
+	browser, err := resolve(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return []string{"--cookies-from-browser", browser}, nil
 }
 
 func New(binary string) *Adapter {
@@ -55,7 +80,11 @@ func (a *Adapter) Probe(
 		)
 	}
 
-	args := a.probeArgs(source)
+	cookies, err := a.cookieArgs(ctx)
+	if err != nil {
+		return core.Media{}, err
+	}
+	args := append(cookies, a.probeArgs(source)...)
 
 	cmd := process.CommandContext(
 		ctx,
@@ -79,8 +108,9 @@ func (a *Adapter) Probe(
 		}
 
 		return core.Media{}, &CommandError{
-			Err:    err,
-			Stderr: stderr.String(),
+			Err:                err,
+			Stderr:             stderr.String(),
+			UsesBrowserCookies: len(cookies) > 0,
 		}
 	}
 
@@ -93,7 +123,7 @@ func (a *Adapter) Probe(
 		)
 	}
 
-	info, err := normalizeInfo(info)
+	info, err = normalizeInfo(info)
 	if err != nil {
 		return core.Media{}, err
 	}
